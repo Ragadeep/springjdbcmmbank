@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 import com.moneymoney.account.SavingsAccount;
 import com.moneymoney.account.service.SavingsAccountService;
 import com.moneymoney.account.service.SavingsAccountServiceImpl;
-import com.moneymoney.account.util.DBUtil;
 import com.moneymoney.exception.AccountNotFoundException;
 @Component
 public class AccountCUI {
@@ -53,11 +52,13 @@ public class AccountCUI {
 		case 2:
 			updateAccount();
 			break;
-		case 9:
-			showAllAccounts();
-			break;
 		case 3:
 			delete();
+			break;
+		case 4:
+			System.out.println("1)Search Account by Account Id \n 2)Search Account by Account Holder Name \n");
+			int selected = scanner.nextInt();
+			searchAccount(selected);
 			break;
 		case 5:
 			withdraw();
@@ -71,12 +72,17 @@ public class AccountCUI {
 		case 8:
 			checkBalance();
 			break;
+		case 9:
+			showAllAccounts();
+			break;
+		case 10:
+			sortAccounts();
 		case 11:
-			try {
-				DBUtil.closeConnection();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
+//			try {
+////				DBUtil.closeConnection();
+//			} catch (SQLException e) {
+//				e.printStackTrace();
+//			}
 			System.exit(0);
 			break;
 		default:
@@ -84,6 +90,92 @@ public class AccountCUI {
 			break;
 		}
 
+	}
+
+	private void sortAccounts() {
+		do {
+			System.out.println("*********Sorting Accounts********");
+			System.out.println("1.Sort By Account Holder Name");
+			System.out.println("2.Sort By Account Holder Name in descending order");
+			System.out.println("3.Sort By Account Balance");
+			System.out.println("4.Enter account balance range to sort in ascending order of the balance");
+			System.out.println("5.Enter account balance range to sort in descending order of the balance");
+			System.out.println("6.Redirect to start menu");
+
+			int choose = scanner.nextInt();
+			List<SavingsAccount> savingsAccountsList = null;
+
+			switch (choose) {
+			case 1:
+				savingsAccountsList = savingsAccountService.sortByAccountHolderName();
+				for (SavingsAccount savings : savingsAccountsList) {
+					System.out.println(savings);
+				}
+
+				break;
+			case 2:
+				savingsAccountsList = savingsAccountService.sortByAccountHolderNameInDescendingOrder();
+				for (SavingsAccount savings : savingsAccountsList) {
+					System.out.println(savings);
+				}
+				break;
+			case 3:
+				savingsAccountsList = savingsAccountService.sortByAccountBalance();
+				for (SavingsAccount savings : savingsAccountsList) {
+					System.out.println(savings);
+				}
+				break;
+			case 4:
+				System.out.println("Enter minimun range");
+				int minimumBalance = scanner.nextInt();
+				System.out.println("Enter maximum range");
+				int maximumBalance = scanner.nextInt();
+				savingsAccountsList = savingsAccountService.sortByBalanceRange(minimumBalance, maximumBalance);
+				for (SavingsAccount savingsAccount : savingsAccountsList) {
+					System.out.println(savingsAccount);
+				}
+				break;
+			case 5:
+				System.out.println("Enter minimun range");
+				int minimumBalanceValue = scanner.nextInt();
+				System.out.println("Enter maximum range");
+				int maximumBalanceValue = scanner.nextInt();
+				savingsAccountsList = savingsAccountService.sortByBalanceRangeInDescendingOrder(minimumBalanceValue,
+						maximumBalanceValue);
+				for (SavingsAccount savingsAccount : savingsAccountsList) {
+					System.out.println(savingsAccount);
+				}
+				break;
+			case 6:
+				start();
+				break;
+			default:
+				System.err.println("Invalid Choice!");
+				break;
+			}
+		} while (true);
+	}
+
+	private void searchAccount(int selected) {
+		switch (selected) {
+		case 1:
+			SavingsAccount savingsAccount = null;
+			System.out.println("Enter Account Id to search:");
+			int accountNumber = scanner.nextInt();
+			savingsAccount = savingsAccountService.searchAccount(accountNumber);
+			System.out.println(savingsAccount);
+			break;
+		case 2:
+			List<SavingsAccount> savingsAccountList;
+			System.out.println("Enter Account HolderName to search:");
+			String holderName = scanner.next();
+			savingsAccountList = savingsAccountService.searchAccountByHolderName(holderName);
+			for (SavingsAccount savingsAccountOne : savingsAccountList) {
+				System.out.println(savingsAccountOne);
+			}
+
+			break;
+		}
 	}
 
 	private void updateAccount() {
@@ -256,25 +348,14 @@ public class AccountCUI {
 		System.out.println("Enter Amount: ");
 		double amount = scanner.nextDouble();
 		SavingsAccount savingsAccount = null;
-		try {
-			savingsAccount = savingsAccountService
-					.getAccountById(accountNumber);
-			savingsAccountService.deposit(savingsAccount, amount);
-			DBUtil.commit();
-		} catch (ClassNotFoundException | SQLException e) {
-			e.printStackTrace();
 			try {
-				DBUtil.rollback();
-			} catch (SQLException e1) {
-				e1.printStackTrace();
+				savingsAccount = savingsAccountService
+						.getAccountById(accountNumber);
+				savingsAccountService.deposit(savingsAccount, amount);
+			} catch (ClassNotFoundException | SQLException | AccountNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-		} catch (Exception e) {
-			try {
-				DBUtil.rollback();
-			} catch (SQLException e1) {
-				e1.printStackTrace();
-			}
-		}
 	}
 
 	private void withdraw() {
@@ -283,26 +364,13 @@ public class AccountCUI {
 		System.out.println("Enter Amount: ");
 		double amount = scanner.nextDouble();
 		SavingsAccount savingsAccount = null;
-		try {
-			savingsAccount = savingsAccountService
-					.getAccountById(accountNumber);
-			savingsAccountService.withdraw(savingsAccount, amount);
-			DBUtil.commit();
-		} catch (ClassNotFoundException | SQLException
-				| AccountNotFoundException e) {
 			try {
-				DBUtil.rollback();
-			} catch (SQLException e1) {
-				e1.printStackTrace();
+				savingsAccountService.withdraw(savingsAccount, amount);
+				savingsAccount = savingsAccountService.getAccountById(accountNumber);
+			} catch (ClassNotFoundException | SQLException | AccountNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-			e.printStackTrace();
-		} catch (Exception e) {
-			try {
-				DBUtil.rollback();
-			} catch (SQLException e1) {
-				e1.printStackTrace();
-			}
-		}
 	}
 
 	private void sortMenu(String sortWay) {

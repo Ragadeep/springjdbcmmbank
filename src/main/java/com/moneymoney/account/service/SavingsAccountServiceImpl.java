@@ -5,12 +5,12 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.moneymoney.account.SavingsAccount;
 import com.moneymoney.account.dao.SavingsAccountDAO;
 import com.moneymoney.account.dao.SavingsAccountDAOImpl;
 import com.moneymoney.account.factory.AccountFactory;
-import com.moneymoney.account.util.DBUtil;
 import com.moneymoney.exception.AccountNotFoundException;
 import com.moneymoney.exception.InsufficientFundsException;
 import com.moneymoney.exception.InvalidInputException;
@@ -40,47 +40,25 @@ public class SavingsAccountServiceImpl implements SavingsAccountService {
 		return savingsAccountDAO.getAllSavingsAccount();
 	}
 
-	public void deposit(SavingsAccount account, double amount)
-			throws ClassNotFoundException, SQLException {
-		if (amount > 0) {
-			double currentBalance = account.getBankAccount()
-					.getAccountBalance();
-			currentBalance += amount;
-			savingsAccountDAO.updateBalance(account.getBankAccount()
-					.getAccountNumber(), currentBalance);
-			// savingsAccountDAO.commit();
-		} else {
-			throw new InvalidInputException("Invalid Input Amount!");
-		}
+	public void deposit(SavingsAccount account, double amount) throws ClassNotFoundException, SQLException {
+		double currentBalance = account.getBankAccount().getAccountBalance();
+		currentBalance += amount;
+		savingsAccountDAO.updateBalance(account.getBankAccount().getAccountNumber(), currentBalance);
 	}
 
 	public void withdraw(SavingsAccount account, double amount)
 			throws ClassNotFoundException, SQLException {
 		double currentBalance = account.getBankAccount().getAccountBalance();
-		if (amount > 0 && currentBalance >= amount) {
-			currentBalance -= amount;
-			savingsAccountDAO.updateBalance(account.getBankAccount()
-					.getAccountNumber(), currentBalance);
-			// savingsAccountDAO.commit();
-		} else {
-			throw new InsufficientFundsException(
-					"Invalid Input or Insufficient Funds!");
-		}
+		currentBalance -= amount;
+		savingsAccountDAO.updateBalance(account.getBankAccount().getAccountNumber(), currentBalance);
+
 	}
 
+	@Transactional
 	public void fundTransfer(SavingsAccount sender, SavingsAccount receiver,
 			double amount) throws ClassNotFoundException, SQLException {
-		try {
-			withdraw(sender, amount);
 			deposit(receiver, amount);
-			DBUtil.commit();
-		} catch (InvalidInputException | InsufficientFundsException e) {
-			e.printStackTrace();
-			DBUtil.rollback();
-		} catch (Exception e) {
-			e.printStackTrace();
-			DBUtil.rollback();
-		}
+			withdraw(sender, amount);
 	}
 
 	@Override
@@ -108,5 +86,40 @@ public class SavingsAccountServiceImpl implements SavingsAccountService {
 	public boolean updateAccount(SavingsAccount account)
 			throws ClassNotFoundException, SQLException {
 		return savingsAccountDAO.updateAccount(account);
+	}
+
+	@Override
+	public SavingsAccount searchAccount(int accountNumber) {
+		return savingsAccountDAO.searchAccount(accountNumber);
+	}
+
+	@Override
+	public List<SavingsAccount> searchAccountByHolderName(String holderName) {
+		return savingsAccountDAO.searchAccountByHolderName(holderName);
+	}
+
+	@Override
+	public List<SavingsAccount> sortByAccountHolderName() {
+		return savingsAccountDAO.sortByAccountHolderName();
+	}
+
+	@Override
+	public List<SavingsAccount> sortByAccountHolderNameInDescendingOrder() {
+		return savingsAccountDAO.sortByAccountHolderNameInDescendingOrder();
+	}
+
+	@Override
+	public List<SavingsAccount> sortByAccountBalance() {
+		return savingsAccountDAO.sortByAccountBalance();
+	}
+
+	@Override
+	public List<SavingsAccount> sortByBalanceRange(int minimumBalance, int maximumBalance) {
+		return savingsAccountDAO.sortByBalanceRange(minimumBalance,maximumBalance);
+	}
+
+	@Override
+	public List<SavingsAccount> sortByBalanceRangeInDescendingOrder(int minimumBalanceValue, int maximumBalanceValue) {
+		return savingsAccountDAO.sortByBalanceRangeInDescendingOrder(minimumBalanceValue,maximumBalanceValue);
 	}
 }

@@ -25,8 +25,7 @@ public interface SavingsAccountService {
 	void fundTransfer(SavingsAccount sender, SavingsAccount receiver,
 			double amount) throws ClassNotFoundException, SQLException;
 
-	void deposit(SavingsAccount account, double amount)
-			throws ClassNotFoundException, SQLException;
+	void deposit(SavingsAccount account, double amount) throws ClassNotFoundException, SQLException;
 
 	void withdraw(SavingsAccount account, double amount)
 			throws ClassNotFoundException, SQLException;
@@ -36,4 +35,18 @@ public interface SavingsAccountService {
 
 	double checkBalance(int accountNumber) throws ClassNotFoundException,
 			SQLException, AccountNotFoundException;
+
+	SavingsAccount searchAccount(int accountNumber);
+
+	List<SavingsAccount> searchAccountByHolderName(String holderName);
+
+	List<SavingsAccount> sortByAccountHolderName();
+
+	List<SavingsAccount> sortByAccountHolderNameInDescendingOrder();
+
+	List<SavingsAccount> sortByAccountBalance();
+
+	List<SavingsAccount> sortByBalanceRange(int minimumBalance, int maximumBalance);
+
+	List<SavingsAccount> sortByBalanceRangeInDescendingOrder(int minimumBalanceValue, int maximumBalanceValue);
 }
